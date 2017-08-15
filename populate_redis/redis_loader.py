@@ -2,15 +2,17 @@
 
 import os
 import sys
+import zlib
 import redis
 
 sys.path.append("Hadoop/python-hadoop")
 from hadoop.io import SequenceFile
 
-file_list = ["full/part-%05d" % x for x in range(1,5)]
+file_list = ["full/" + x for x in filter(lambda x:"part-" in x, os.listdir("full"))]
 redis_conn = redis.Redis()
 
 for ef in file_list:
+    print(ef)
     reader = SequenceFile.Reader(ef)
     kc = reader.getKeyClass()
     vc = reader.getValueClass()
@@ -19,8 +21,5 @@ for ef in file_list:
 
     while reader.next(k,v):
         ks = k.toString()
-        if not redis_conn.get(ks):
-            redis_conn.set(ks, v.toString())
-            print("%s" % ks)
-        else:
-            print("Skipping %s." % ks)
+        redis_conn.set(ks, v.toString())
+        print("%s" % ks)
