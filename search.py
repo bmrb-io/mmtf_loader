@@ -1,20 +1,17 @@
-#!/usr/bin/env python3
-
-from __future__ import print_function
+#!/usr/bin/env python
 
 import re
 import sys
 import json
 
-sequences = json.loads(open("ss.json",'r').read())
+sequences = json.load(open("ss.json",'r'))
 
-def contains(search):
+def contains(str1, distance, str2):
     """ Check if search strings exist in DB separated by distance. """
-    
+
     matches = []
-    
-    str1, distance, str2 = search.split(":")
-    for seq in sequences.keys():
+
+    for seq in sequences:
         if str1 in seq and str2 in seq:
             s1idx = [m.start() for m in re.finditer('(?=%s)' % str1, seq)]
             for idx in s1idx:
@@ -22,9 +19,5 @@ def contains(search):
                 end = start + len(str2)
                 if seq[start:end] == str2:
                     matches.extend(sequences[seq])
-                    
-    return sorted(list(set(matches)))
 
-if __name__ == "__main__":
-    for arg in sys.argv[1:]:
-        print("%s %s" % (arg, contains(arg)))
+    return sorted(list(set(matches)))
