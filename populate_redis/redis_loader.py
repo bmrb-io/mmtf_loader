@@ -18,9 +18,9 @@ for ef in file_list:
     k,v = kc(), vc()
 
     while reader.next(k,v):
-        k = k.toString()
-        if not redis_conn.get(k):
-            redis_conn.set(k, v.toString())
-            print("%s" % k)
+        ks = k.toString()
+        if not redis_conn.get(ks):
+            redis_conn.set(ks, v.toString())
+            print("%s" % ks)
         else:
-            print("Skipping %s." % k)
+            print("Skipping %s." % ks)

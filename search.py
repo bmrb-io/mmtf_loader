@@ -3,7 +3,8 @@
 import re
 import sys
 import json
-from
+import redis
+from mmtf import parse_gzip
 
 sequences = json.load(open("data/ss.json",'r'))
 
@@ -27,3 +28,17 @@ def get_mmtfs(str1, distance, str2):
     """ Returns a list of mmtf objects for PDB IDs that have str1 separated
     from str2 by distance."""
 
+    pdbs = contains(str1, distance, str2)
+    results = []
+
+    red = redis.Redis()
+    for pdb in pdbs:
+        print("Fetching %s from red." % pdb)
+        gzipped_mmtf = red.get(pdb)
+        if not gzipped_mmtf:
+            print("Missing %s" % pdb)
+            #raise ValueError("Could not find PDB %s in Redis!" % pdb)
+            continue
+        results.append(parse_gzip(gzipped_mmtf))
+
+    return results
