@@ -3,8 +3,9 @@
 import re
 import sys
 import json
+from
 
-sequences = json.load(open("ss.json",'r'))
+sequences = json.load(open("data/ss.json",'r'))
 
 def contains(str1, distance, str2):
     """ Check if search strings exist in DB separated by distance. """
@@ -21,3 +22,8 @@ def contains(str1, distance, str2):
                     matches.extend(sequences[seq])
 
     return sorted(list(set(matches)))
+
+def get_mmtfs(str1, distance, str2):
+    """ Returns a list of mmtf objects for PDB IDs that have str1 separated
+    from str2 by distance."""
+

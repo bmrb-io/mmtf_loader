@@ -1,0 +1,9 @@
+[submodule "Hadoop"]
+	path = Hadoop
+	url = https://github.com/matteobertozzi/Hadoop.git
+[submodule "mmtf"]
+	path = mmtf
+	url = https://github.com/rcsb/mmtf-python.git
+[submodule "populate_redis/Hadoop"]
+	path = populate_redis/Hadoop
+	url = https://github.com/matteobertozzi/Hadoop.git
