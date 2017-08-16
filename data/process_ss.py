@@ -2,11 +2,13 @@
 
 import re
 import sys
-import json
+import msgpack
+import redis
 
+r = redis.Redis()
 sequences = {}
 
-with open("ss.txt", "r") as ss_data, open("ss.json", "w") as output:
+with open("ss.txt", "r") as ss_data, open("ss.msg","w") as output:
 
     mode = True
     for line in ss_data:
@@ -16,9 +18,12 @@ with open("ss.txt", "r") as ss_data, open("ss.json", "w") as output:
             mode = True
         elif "secstr" in line:
             mode = False
-            sequences.setdefault(seq,[]).append(pdb)
+            if r.get(pdb):
+                sequences.setdefault(seq,[]).append(pdb)
+            else:
+                print("Skipping %s not in redis." % pdb)
         else:
             if mode:
                 seq += line.strip()
 
-    json.dump(sequences, output)
+    msgpack.dump(sequences, msg)

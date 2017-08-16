@@ -3,18 +3,12 @@
 import re
 import sys
 import zlib
-
-try:
-    import simplejson as json
-except ImportError:
-    import json
-
 import redis
 import msgpack
 from StringIO import StringIO
 from mmtf import parse_gzip, MMTFDecoder
 
-sequences = json.load(open("data/ss.json",'r'))
+sequences = msgpack.load(open("data/ss.msg",'r'))
 
 def contains(str1, distance, str2):
     """ Check if search strings exist in DB separated by distance. """
