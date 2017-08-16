@@ -3,9 +3,10 @@
 import re
 import sys
 import zlib
-import redis
 import msgpack
 from StringIO import StringIO
+
+import redis
 from mmtf import parse_gzip, MMTFDecoder
 
 sequences = msgpack.load(open("data/ss.msg",'r'))
@@ -52,9 +53,7 @@ def get_mmtfs(str1, distance, str2, parsed=True):
     for x,pdb in enumerate(mmtfs):
 
         if not pdb:
-            print("Missing %s" % pdbs[x])
-            #raise ValueError("Could not find PDB %s in Redis!" % pdb)
-            continue
+            raise ValueError("Could not find PDB %s in Redis!" % pdb)
 
         if parsed:
             yield parse_mmtf(pdb)
