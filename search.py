@@ -3,7 +3,12 @@
 import re
 import sys
 import zlib
-import json
+
+try:
+    import simplejson as json
+except ImportError:
+    import json
+
 import redis
 import msgpack
 from StringIO import StringIO
@@ -30,26 +35,37 @@ def contains(str1, distance, str2):
 
     return sorted(list(set(matches)))
 
+def fake_redis(pdbs):
+    """ Debug method to use FS rather than Redis."""
+
+    for pdb in pdbs:
+        try:
+            yield open("/zfs/mmtfs/%s" % pdb,"r").read()
+        except IOError:
+            yield None
+
 def get_mmtfs(str1, distance, str2, parsed=True):
     """ Returns a list of mmtf objects for PDB IDs that have str1 separated
     from str2 by distance."""
 
     pdbs = contains(str1, distance, str2)
 
-    red = redis.Redis()
-    for pdb in pdbs:
-        print("Fetching %s from red." % pdb)
-        mmtf = red.get(pdb)
+    try:
+        mmtfs = redis.Redis().mget(pdbs)
+    except Exception:
+        mmtfs = fake_redis(pdbs)
 
-        if not mmtf:
-            print("Missing %s" % pdb)
+    for x,pdb in enumerate(mmtfs):
+
+        if not pdb:
+            print("Missing %s" % pdbs[x])
             #raise ValueError("Could not find PDB %s in Redis!" % pdb)
             continue
 
-    if parsed:
-        yield parse_mmtf(mmtf)
-    else:
-        yield mmtf
+        if parsed:
+            yield parse_mmtf(pdb)
+        else:
+            yield pdb
 
 def parse_mmtf(mmtf):
     """ Loads the MMTF objects. """
@@ -58,4 +74,7 @@ def parse_mmtf(mmtf):
     mmtf = zlib.decompress(mmtf, 16+zlib.MAX_WBITS)
     mmtf = msgpack.unpackb(mmtf)
     mmtf_decoder.decode_data(mmtf)
-    yield mmtf_decoder
+    return mmtf_decoder
+
+if __name__ == "__main__":
+    list(get_mmtfs("XXX", 6, "AAA", parsed=False))
