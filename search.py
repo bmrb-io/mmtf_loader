@@ -4,10 +4,8 @@ import re
 import sys
 import zlib
 import msgpack
-from StringIO import StringIO
 
 import redis
-from mmtf import parse_gzip, MMTFDecoder
 
 sequences = msgpack.load(open("data/ss.msg",'r'))
 
@@ -39,7 +37,7 @@ def fake_redis(pdbs):
         except IOError:
             yield None
 
-def get_mmtfs(str1, distance, str2, parsed=True):
+def get_mmtfs(str1, distance, str2):
     """ Returns a list of mmtf objects for PDB IDs that have str1 separated
     from str2 by distance."""
 
@@ -53,21 +51,20 @@ def get_mmtfs(str1, distance, str2, parsed=True):
     for x,pdb in enumerate(mmtfs):
 
         if not pdb:
-            raise ValueError("Could not find PDB %s in Redis!" % pdb)
+            raise ValueError("Could not find PDB %s in Redis!" % pdbs[x])
 
-        if parsed:
-            yield parse_mmtf(pdb)
-        else:
-            yield pdb
+        yield extract_coords(pdb, pdbs[x])
 
-def parse_mmtf(mmtf):
-    """ Loads the MMTF objects. """
+def extract_coords(data, pdb):
+    """ Turns the compressed msgpack data into something useful. """
 
-    mmtf_decoder = MMTFDecoder()
-    mmtf = zlib.decompress(mmtf, 16+zlib.MAX_WBITS)
-    mmtf = msgpack.unpackb(mmtf)
-    mmtf_decoder.decode_data(mmtf)
-    return mmtf_decoder
+    try:
+        return msgpack.loads(zlib.decompress(data))
+    except Exception:
+        print ("Error: %s" % pdb)
 
 if __name__ == "__main__":
-    list(get_mmtfs("XXX", 6, "AAA", parsed=False))
+    list(get_mmtfs("AAA", 6, "AAA"))
+
+#https://stackoverflow.com/questions/30057240/whats-the-fastest-way-to-save-load-a-large-list-in-python-2-7
+#https://docs.scipy.org/doc/numpy/reference/generated/numpy.array.html
