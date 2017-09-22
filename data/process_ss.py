@@ -8,6 +8,8 @@ import redis
 r = redis.Redis()
 sequences = {}
 
+ids = {line.rstrip().upper():True for line in open('selected_ids_20_2')}
+
 with open("ss.txt", "r") as ss_data, open("ss.msg","w") as output:
 
     mode = True
@@ -19,11 +21,15 @@ with open("ss.txt", "r") as ss_data, open("ss.msg","w") as output:
         elif "secstr" in line:
             mode = False
             if r.get(pdb):
-                sequences.setdefault(seq,[]).append(pdb)
+                if pdb not in ids:
+                    #print("Skipping by virtue of MolProbity: %s" % pdb)
+                    pass
+                else:
+                    sequences.setdefault(seq,[]).append(pdb)
             else:
                 print("Skipping %s not in redis." % pdb)
         else:
             if mode:
                 seq += line.strip()
 
-    msgpack.dump(sequences, msg)
+    msgpack.dump(sequences, output)
