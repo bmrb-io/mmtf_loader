@@ -10,7 +10,7 @@ sequences = {}
 
 ids = {line.rstrip().upper():True for line in open('selected_ids_20_2')}
 
-with open("ss.txt", "r") as ss_data, open("ss.msg","w") as output:
+with open("ss.txt", "r") as ss_data, open("../ss.msg","w") as output:
 
     mode = True
     for line in ss_data:

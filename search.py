@@ -7,9 +7,9 @@ import msgpack
 
 import redis
 
-sequences = msgpack.load(open("data/ss.msg",'r'))
+sequences = msgpack.load(open("ss.msg",'r'))
 
-def contains(str1, distance, str2):
+def _contains(str1, distance, str2):
     """ Check if search strings exist in DB separated by distance. """
 
     matches = []
@@ -28,7 +28,7 @@ def contains(str1, distance, str2):
 
     return sorted(list(set(matches)))
 
-def fake_redis(pdbs):
+def _fake_redis(pdbs):
     """ Debug method to use FS rather than Redis."""
 
     for pdb in pdbs:
@@ -37,29 +37,29 @@ def fake_redis(pdbs):
         except IOError:
             yield None
 
-def get_mmtfs(str1, distance, str2):
+def get_coords(str1, distance, str2):
     """ Returns a list of mmtf objects for PDB IDs that have str1 separated
     from str2 by distance."""
 
-    pdbs = contains(str1, distance, str2)
+    pdbs = _contains(str1, distance, str2)
 
     try:
         mmtfs = redis.Redis().mget(pdbs)
     except Exception:
-        mmtfs = fake_redis(pdbs)
+        mmtfs = _fake_redis(pdbs)
 
     for x,pdb in enumerate(mmtfs):
 
         if not pdb:
             raise ValueError("Could not find PDB %s in Redis!" % pdbs[x])
 
-        yield extract_coords(pdb, pdbs[x])
+        yield _extract_coords(pdb, pdbs[x])
 
-def extract_coords(data, pdb):
+def _extract_coords(data, pdb):
     """ Turns the compressed msgpack data into something useful. """
 
     try:
-        return msgpack.loads(zlib.decompress(data))
+        return msgpack.loads(data)
     except Exception:
         print ("Error: %s" % pdb)
 

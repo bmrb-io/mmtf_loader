@@ -5,9 +5,8 @@ import sys
 import zlib
 import redis
 import msgpack
-from collections import deque
 import multiprocessing
-
+from collections import deque
 
 from mmtf import parse_gzip, MMTFDecoder
 
@@ -36,7 +35,7 @@ def extract_important(mmtf):
         residue_list.append([m.group_list[res]['groupName'], atom_list])
         max_res = max_res - 1
         if max_res == 0:
-            return zlib.compress(msgpack.dumps(residue_list))
+            return msgpack.dumps(residue_list)
 
 def chunker(l, desired_sublists):
     """ Breaks a list in x sublists of roughly equal size. """
@@ -50,6 +49,7 @@ def chunker(l, desired_sublists):
     return res
 
 redis_conn = redis.Redis()
+ids = {line.rstrip().upper():True for line in open('../data/selected_ids_20_2')}
 file_list = ["full/" + x for x in filter(lambda x:"part-" in x, os.listdir("full"))]
 cores = multiprocessing.cpu_count()
 chunked_list = chunker(file_list, cores)
@@ -68,6 +68,10 @@ for x in range(0, cores):
 
             while reader.next(k,v):
                 ks = k.toString()
-                redis_conn.set(ks, extract_important(v.toString()))
-                print("%s" % ks)
+                if ks in ids:
+                    print("    setting %s" % ks)
+                    redis_conn.set(ks, extract_important(v.toString()))
+                else:
+                    print("Not setting %s" % ks)
+
         sys.exit(0)
