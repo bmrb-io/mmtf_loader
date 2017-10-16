@@ -73,7 +73,7 @@ def get_coords(str1, str2, distance_min, distance_max=None):
         if not pdb:
             raise ValueError("Could not find PDB %s in Redis!" % pdbs[x])
 
-        yield [pdbs[x], _extract_coords(pdb, pdbs[x])]
+        yield [pdbs[x], _extract_coords(pdb, pure_ids[x])]
 
 def _extract_coords(data, pdb):
     """ Turns the compressed msgpack data into something useful. """

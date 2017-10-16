@@ -14,11 +14,11 @@ with open("ss.txt", "r") as ss_data, open("../ss.msg","w") as output:
 
     mode = True
     for line in ss_data:
-        if "sequence" in line:
+        if "A:sequence" in line:
             pdb = line[1:5]
             seq = ""
             mode = True
-        elif "secstr" in line:
+        elif "A:secstr" in line:
             mode = False
             if r.get(pdb):
                 if pdb not in ids:
