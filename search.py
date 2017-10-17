@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
-import re
 import sys
 import zlib
-import msgpack
+from re import finditer
 
 import redis
+import msgpack
 
-sequences = msgpack.load(open("ss.msg",'r'))
+r = redis.Redis()
+sequences = msgpack.loads(r.get("seq_dict"))
 
 def _contains(str1, str2, distance_min, distance_max=None):
     """ Check if search strings exist in DB separated by distance. """
@@ -22,7 +23,7 @@ def _contains(str1, str2, distance_min, distance_max=None):
 
     for seq in sequences:
         if str1 in seq and str2 in seq:
-            s1idx = [m.start() for m in re.finditer('(?=%s)' % str1, seq)]
+            s1idx = [m.start() for m in finditer('(?=%s)' % str1, seq)]
 
             for idx in s1idx:
                 for diter in range(distance_min, distance_max + 1):
@@ -64,7 +65,7 @@ def get_coords(str1, str2, distance_min, distance_max=None):
     pure_ids = [x[0] for x in pdbs]
 
     try:
-        mmtfs = redis.Redis().mget(pure_ids)
+        mmtfs = r.mget(pure_ids)
     except Exception:
         mmtfs = _fake_redis(pure_ids)
 
