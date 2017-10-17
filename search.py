@@ -84,7 +84,7 @@ def _extract_coords(data, pdb):
         print ("Error: %s" % pdb)
 
 if __name__ == "__main__":
-    list(get_mmtfs("AAA", 6, "AAA"))
+    list(get_mmtfs("AAA", "AAA", 6))
 
 #https://stackoverflow.com/questions/30057240/whats-the-fastest-way-to-save-load-a-large-list-in-python-2-7
 #https://docs.scipy.org/doc/numpy/reference/generated/numpy.array.html
