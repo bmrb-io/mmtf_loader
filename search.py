@@ -10,13 +10,18 @@ import msgpack
 r = redis.Redis()
 sequences = msgpack.loads(r.get("seq_dict"))
 
-def _contains(str1, str2, distance_min, distance_max=None):
+def _contains(str1, str2, distance_min=None, distance_max=None):
     """ Check if search strings exist in DB separated by distance. """
 
     matches = {}
 
     str1 = str1.upper()
     str2 = str2.upper()
+    str1l = len(str1)
+
+    # Set the defaults
+    if distance_min is None:
+        distance_min = 0
 
     if distance_max is None:
         distance_max = distance_min
@@ -24,19 +29,19 @@ def _contains(str1, str2, distance_min, distance_max=None):
     for seq in sequences:
         if str1 in seq and str2 in seq:
             s1idx = [m.start() for m in finditer('(?=%s)' % str1, seq)]
+            if str1 == str2:
+                s2idx = s1idx
+            else:
+                s2idx = [m.start() for m in finditer('(?=%s)' % str2, seq)]
 
             for idx in s1idx:
-                for diter in range(distance_min, distance_max + 1):
-
-                    start = idx + len(str1) + diter
-                    end = start + len(str2)
-
-                    if seq[start:end] == str2:
+                for diter in range(distance_min + str1l + idx, distance_max + 1 + str1l + idx):
+                    if diter in s2idx:
                         for pdb in set(sequences[seq]):
-                            if pdb in matches:
-                                matches[pdb].add((idx, diter))
-                            else:
-                                matches[pdb] = set([(idx, diter)])
+                            try:
+                                matches[pdb].add((idx, diter - str1l - idx))
+                            except KeyError:
+                                matches[pdb] = set([(idx, diter- str1l - idx)])
 
     clean_res = []
 
