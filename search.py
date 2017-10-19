@@ -32,23 +32,32 @@ def _contains(str1, str2, distance_min=None, distance_max=None):
 
     for seq in sequences:
         if str1 in seq and str2 in seq:
-            s1idx = [m.start()+str1l for m in finditer('(?=%s)' % str1, seq)]
-            s2idx = deque([m.start()+s1idx[0] for m in finditer('(?=%s)' % str2, seq[s1idx[0]:s1idx[-1] + str2l])])
+            s1idx = [m.start() for m in finditer('(?=%s)' % str1, seq)]
+            s2idx = deque([m.start()+s1idx[0]+str1l for m in finditer('(?=%s)' % str2, seq[s1idx[0]+str1l:s1idx[-1] + str2l])])
+
+            # If no matching 2nd 3-mer after first one...
             if len(s2idx) == 0:
                 continue
 
+            # Go through the matching first residues
             for idx in s1idx:
-                while len(s2idx) > 0 and idx > s2idx[0]:
-                    s2idx.popleft()
-                if len(s2idx) == 0:
-                    continue
-                for diter in range(distance_min + idx + str1l, distance_max + idx + str1l):
-                    if diter in s2idx:
+
+                # Remove any non-possible 2nd 3-mer, if none remain we are done
+                try:
+                    while idx > s2idx[0]:
+                        s2idx.popleft()
+                except IndexError:
+                    break
+
+                # Check each possible distance pair
+                for s2item in s2idx:
+                    distance = s2item - idx - str1l
+                    if distance >= distance_min and distance < distance_max:
                         for pdb in set(sequences[seq]):
                             try:
-                                matches[pdb].add((idx - str1l, diter - str1l - idx))
+                                matches[pdb].add((idx, distance))
                             except KeyError:
-                                matches[pdb] = set([(idx - str1l, diter - str1l - idx)])
+                                matches[pdb] = set([(idx, distance)])
 
     clean_res = []
 
