@@ -92,3 +92,4 @@ print "Parent alive, starting to wait..."
 for pid in pids:
     print "Waiting for PID %s to finish..." % pid
     os.waitpid(pid, 0)
+print "Done!"

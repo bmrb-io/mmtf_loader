@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
 import sys
-import zlib
-from re import finditer
-
 import msgpack
+from re import finditer
 from collections import deque
 
 sequences, pdb_archive = msgpack.load(open("/raid/trdistance/archive.msg", "rb"))
@@ -78,10 +76,8 @@ def get_coords(str1, str2, distance_min=None, distance_max=None, debug=False):
     for x in pdbs:
         yield [x, pdb_archive[x[0]]]
 
-    return results
-
 if __name__ == "__main__":
-    list(get_mmtfs("AAA", "AAA", 6))
+    list(get_coords("AAA", "AAA", 6, 6))
 
 #https://stackoverflow.com/questions/30057240/whats-the-fastest-way-to-save-load-a-large-list-in-python-2-7
 #https://docs.scipy.org/doc/numpy/reference/generated/numpy.array.html
