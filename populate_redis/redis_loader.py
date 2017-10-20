@@ -13,6 +13,10 @@ from mmtf import parse_gzip, MMTFDecoder
 sys.path.append("Hadoop/python-hadoop")
 from hadoop.io import SequenceFile
 
+res_mapper = {'PRO':'P', 'GLY':'G', 'ALA':'A', 'ARG':'R', 'ASN':'N',
+              'ASP':'D', 'CYS':'C', 'GLN':'Q', 'GLU':'E', 'HIS':'H',
+              'ILE':'I', 'LEU':'L', 'LYS':'K', 'MET':'M', 'PHE':'F',
+              'SER':'S', 'THR':'T', 'TRP':'W', 'TYR':'Y', 'VAL':'V'}
 
 def extract_important(mmtf):
     """ Returns the data we want from the MMTF."""
@@ -29,10 +33,14 @@ def extract_important(mmtf):
 
     residue_list = []
     for res in m.group_type_list:
-        atom_list = []
+        atom_list = {}
         for atom in m.group_list[res]['atomNameList']:
-            atom_list.append([atom, coords.popleft()])
-        residue_list.append([m.group_list[res]['groupName'], atom_list])
+            # Only add used atoms
+            if "C" in atom or "N" in atom or "H" in atom:
+                atom_list[atom] = coords.popleft()
+            else:
+                coords.popleft()
+        residue_list.append([res_mapper.get(m.group_list[res]['groupName'], "X"), atom_list])
         max_res = max_res - 1
         if max_res == 0:
             return msgpack.dumps(residue_list)
@@ -52,7 +60,9 @@ redis_conn = redis.Redis()
 ids = {line.rstrip().upper():True for line in open('selected_ids_20_2')}
 file_list = ["full/" + x for x in filter(lambda x:"part-" in x, os.listdir("full"))]
 cores = multiprocessing.cpu_count()
-chunked_list = chunker(file_list, cores)
+chunked_list = chunker(file_list[0:cores], cores)
+
+pids = []
 
 for x in range(0, cores):
     pid = os.fork()
@@ -75,3 +85,10 @@ for x in range(0, cores):
                     print("Not setting %s" % ks)
 
         sys.exit(0)
+    else:
+        pids.append(pid)
+
+print "Parent alive, starting to wait..."
+for pid in pids:
+    print "Waiting for PID %s to finish..." % pid
+    os.waitpid(pid, 0)

@@ -8,21 +8,29 @@ sequences = {}
 
 ids = {line.rstrip().upper():True for line in open('selected_ids_20_2')}
 
-res_mapper = {'PRO':'P', 'GLY':'G', 'ALA':'A', 'ARG':'R', 'ASN':'N',
-              'ASP':'D', 'CYS':'C', 'GLN':'Q', 'GLU':'E', 'HIS':'H',
-              'ILE':'I', 'LEU':'L', 'LYS':'K', 'MET':'M', 'PHE':'F',
-              'SER':'S', 'THR':'T', 'TRP':'W', 'TYR':'Y', 'VAL':'V'}
 
+def get_seq(pdb_obj):
+    return "".join([x[0] for x in pdb_obj])
 
-def get_seq(pdb):
-    return "".join([res_mapper.get(x[0], "X") for x in msgpack.loads(r.get(pdb))])
+everything = {}
+keys = r.keys()
+counter = 0
 
-for pdb in r.keys():
+for x,pdb in enumerate(keys):
 
-    if pdb not in ids and pdb != "seq_dict":
+    counter += 1
+    if pdb == "seq_dict" or pdb == "all_pdbs":
+        continue
+    elif pdb not in ids:
         raise ValueError("Invalid PDB in DB: %s" % pdb)
     else:
-        sequences.setdefault(get_seq(pdb),[]).append(pdb)
+        pdb_obj = msgpack.loads(r.get(pdb))
+        sequences.setdefault(get_seq(pdb_obj),[]).append(pdb)
+        everything[pdb] = pdb_obj
 
-# Dump the sequence table to redis
-r.set("seq_dict", msgpack.dumps(sequences))
+    if counter % 100 == 0:
+        print "%2d percent" % (float(x)/len(keys)*100)
+
+# Dump the everything object to disk
+with open("/raid/trdistance/archive.msg", "wb") as ac:
+    ac.write(msgpack.dumps([sequences, everything]))

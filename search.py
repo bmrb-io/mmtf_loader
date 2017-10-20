@@ -4,13 +4,10 @@ import sys
 import zlib
 from re import finditer
 
+import msgpack
 from collections import deque
 
-import redis
-import msgpack
-
-r = redis.Redis()
-sequences = msgpack.loads(r.get("seq_dict"))
+sequences, pdb_archive = msgpack.load(open("/raid/trdistance/archive.msg", "rb"))
 
 def _contains(str1, str2, distance_min=None, distance_max=None):
     """ Check if search strings exist in DB separated by distance. """
@@ -66,14 +63,6 @@ def _contains(str1, str2, distance_min=None, distance_max=None):
 
     return clean_res
 
-def _fake_redis(pdbs):
-    """ Debug method to use FS rather than Redis."""
-
-    for pdb in pdbs:
-        try:
-            yield open("/zfs/mmtfs/%s" % pdb,"r").read()
-        except IOError:
-            yield None
 
 def get_coords(str1, str2, distance_min=None, distance_max=None, debug=False):
     """ Returns a list of mmtf objects for PDB IDs that have str1 separated
@@ -86,27 +75,10 @@ def get_coords(str1, str2, distance_min=None, distance_max=None, debug=False):
     if debug:
         yield pdbs
 
-    pure_ids = [x[0] for x in pdbs]
+    for x in pdbs:
+        yield [x, pdb_archive[x[0]]]
 
-    try:
-        mmtfs = r.mget(pure_ids)
-    except Exception:
-        mmtfs = _fake_redis(pure_ids)
-
-    for x,pdb in enumerate(mmtfs):
-
-        if not pdb:
-            raise ValueError("Could not find PDB %s in Redis!" % pdbs[x])
-
-        yield [pdbs[x], _extract_coords(pdb, pure_ids[x])]
-
-def _extract_coords(data, pdb):
-    """ Turns the compressed msgpack data into something useful. """
-
-    try:
-        return msgpack.loads(data)
-    except Exception:
-        print ("Error: %s" % pdb)
+    return results
 
 if __name__ == "__main__":
     list(get_mmtfs("AAA", "AAA", 6))
