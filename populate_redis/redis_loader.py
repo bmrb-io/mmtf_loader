@@ -56,11 +56,11 @@ def chunker(l, desired_sublists):
         c = (c - 1) % desired_sublists
     return res
 
-redis_conn = redis.Redis()
+redis_conn = redis.Redis(db=2)
 ids = {line.rstrip().upper():True for line in open('selected_ids_20_2')}
 file_list = ["full/" + x for x in filter(lambda x:"part-" in x, os.listdir("full"))]
 cores = multiprocessing.cpu_count()
-chunked_list = chunker(file_list[0:cores], cores)
+chunked_list = chunker(file_list, cores)
 
 pids = []
 
