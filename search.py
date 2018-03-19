@@ -5,7 +5,7 @@ import msgpack
 from re import finditer
 from collections import deque
 
-sequences, pdb_archive = msgpack.load(open("/raid/trdistance/archive.msg", "rb"))
+sequences, pdb_archive = msgpack.load(open("archive.msg", "rb"))
 
 def _contains(str1, str2, distance_min=None, distance_max=None):
     """ Check if search strings exist in DB separated by distance. """
